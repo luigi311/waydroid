@@ -97,8 +97,7 @@ class DBusContainerManager(dbus.service.Object):
     def MountSharedFolder(self):
         guest_dir = self.args.session['andromeda_data'] + '/media/0/Host'
         host_dir = self.args.session['host_user'] + '/Android'
-        helpers.mount.bind(self.args, guest_dir, host_dir)
-        chmod(self.args, host_dir, "777")
+        helpers.mount.bind(self.args, guest_dir, host_dir, user_mapping=True)
 
     @dbus.service.method("io.furios.Andromeda.ContainerManager", out_signature='')
     def UnmountSharedFolder(self):

@@ -6,6 +6,9 @@ import os
 import tools.helpers.run
 from tools.helpers.version import versiontuple, kernel_version
 
+def get_mapping():
+    return f"1023/32011:@1023/@32011"
+
 def ismount(folder):
     """
     Ismount() implementation, that works for mount --bind.
@@ -21,7 +24,7 @@ def ismount(folder):
                 return True
     return False
 
-def bind(args, source, destination, create_folders=True, umount=False):
+def bind(args, source, destination, create_folders=True, umount=False, user_mapping=False):
     """
     Mount --bind a folder and create necessary directory structure.
     :param umount: when destination is already a mount point, umount it first.
@@ -44,13 +47,19 @@ def bind(args, source, destination, create_folders=True, umount=False):
                                path)
 
     # Actually mount the folder
-    tools.helpers.run.user(args, ["mount", "-o", "bind", source, destination])
+    if user_mapping:
+        mapping = get_mapping()
 
+        tools.helpers.run.user(args, ["bindfs", f"--map={mapping}", source, destination])
+    else:
+        tools.helpers.run.user(args, ["mount", "-o", "bind", source, destination])
+    
+    
     # Verify, that it has worked
     if not ismount(destination):
         raise RuntimeError("Mount failed: " + source + " -> " + destination)
 
-def bind_file(args, source, destination, create_folders=False):
+def bind_file(args, source, destination, create_folders=False, user_mapping=False):
     """
     Mount a file with the --bind option, and create the destination file,
     if necessary.
@@ -69,8 +78,12 @@ def bind_file(args, source, destination, create_folders=False):
         tools.helpers.run.user(args, ["touch", destination])
 
     # Mount
-    tools.helpers.run.user(args, ["mount", "-o", "bind", source,
-                                destination])
+    if user_mapping:
+        mapping = get_mapping()
+
+        tools.helpers.run.user(args, ["bindfs", f"--map={mapping}", source, destination])
+    else:
+        tools.helpers.run.user(args, ["mount", "-o", "bind", source, destination])    
 
 def umount_all_list(prefix, source="/proc/mounts"):
     """
